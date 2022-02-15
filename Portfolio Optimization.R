@@ -1,4 +1,4 @@
-data <-read.csv("E:\\Projects\\waleed\\Stock.csv")
+data <-read.csv("E:\\Projects\\Stock.csv")
 data$Date=as.Date(data$Date)
 
 data$INTC<-as.xts(x = data$INTC, order.by = data$Date)
