@@ -1,0 +1,200 @@
+---
+title: "Google Data Analytics Capstone Project"
+author: "Safi Ullah"
+date: "18/04/2022"
+output:
+  html_notebook: default
+  pdf_document: default
+---
+
+#Introduction
+
+This case study is my capstone project for the Google Data Analytics course. This project is on Bellabeat, a high-tech company that manufactures health-focused smart products.
+
+#Scenerio
+
+Bellabeat is a successful small company, but they have the potential to become a larger player in the global smart device market. Urška Sršen, cofounder and Chief Creative Officer of Bellabeat, believes that analyzing smart device fitness data could help unlock new growth opportunities for the company.  I have been tasked as a marketing analyst to gain insight into how people are using their smart devices and come up with recommendations for how these trends can inform Bellabeat marketing strategy.
+
+#Stakeholders
+
+**Urška Sršen:** Bellabeat’s cofounder and Chief Creative Officer
+
+**Sando Mur:** Mathematician and Bellabeat’s cofounder; key member of the Bellabeat executive team
+
+**Bellabeat marketing analytics team:** A team of data analysts responsible for collecting, analyzing, and reporting data that helps guide Bellabeat’s marketing strategy. 
+
+
+#Identify the Business Task
+
+To define new marketing strategies, knowledge of these components are key by using data samples from FitBit Fitness Tracker; Identifying the trends in smart device usage, how those trends apply to Bellabeat customers and how they influence Bellabeat marketing strategy.
+
+#Data Sources
+
+The user data from FitBit Fitness Tracker has been merged and categorised into different sections; daily activity, daily calories
+daily intensities, daily steps, etc. For two months; April and May, 2016. The dataset has been made publically available through Mobius. It contains personal fitness tracker from thirty fitbit users  who consented to the submission of personal tracker data, including minute-level output for physical activity, heart rate, and sleep monitoring.
+
+#Documentaion, Cleaning and Preparation of Data for Analysis
+##Tools for Analysis
+
+R 
+
+##Preparing the Data
+Installing correct packages
+
+```{r }
+install.packages("tidyverse")
+library(tidyverse)
+```
+
+```{r }
+install.packages("dplyr")
+library(dplyr)
+```
+
+```{r }
+install.packages("tidyr")
+library(tidyr)
+```
+
+
+###Importing and loading the dataset
+
+```{r }
+daily_activity <- read.csv("dailyActivity_merged.csv")
+
+sleepDay_merged <- read.csv("sleepDay_merged.csv")
+```
+
+
+###Check the data structure of the dataset
+
+```{r }
+str(daily_activity)
+str(sleepDay_merged)
+```
+
+```{r }
+colnames(daily_activity)
+colnames(sleepDay_merged)
+```
+
+
+###Adding new columns to daily_activity
+```{r }
+daily_activity$Total_Active_Minutes <- daily_activity$VeryActiveMinutes + daily_activity$FairlyActiveMinutes + daily_activity$LightlyActiveMinutes + daily_activity$SedentaryMinutes
+
+daily_activity$Total_Active_Hours <- round(daily_activity$Total_Active_Minutes/60)
+daily_activity$Dates <- as.Date(daily_activity$ActivityDate, "%m/%d/%Y")
+
+```
+
+
+
+
+###Renaming columns in daily_activity
+```{r }
+names(daily_activity) <- c( "Id", "Activity_Date", "Total_Steps", "Total_Distance","Tracker_Distance", "Logged_Activities_Distance", "Very_Active_Distance", "Moderately_Active_Distance", "Light_Active_Distance", "Sedentary_Active_Distance", "Very_Active_Minutes","Fairly_Active_Minutes", "Lightly_Active_Minutes", "Sedentary_Minutes", "Calories", "Total_Active_Minutes", "Total_Active_Hours", "Dates")
+```
+
+###Adding new columns to sleepDay_merged
+```{r }
+sleepDay_merged$Total_Hours_Asleep <- round(sleepDay_merged$TotalMinutesAsleep/60)
+sleepDay_merged$Dates <- as.Date(sleepDay_merged$SleepDay, "%m/%d/%Y")
+```
+
+###Renaming columns in sleepDay_merged
+```{r}
+names(sleepDay_merged) <- c("Id", "Sleep_Day", "Total_Sleep_Records", "Total_Minutes_Asleep", "Total_Time_In_Bed", "Total_Hours_Asleep", "Dates")
+```
+
+###Adding relevant columns to a new table
+
+```{r }
+daily_activity_b <- daily_activity %>%
+  select(Id, Dates, Total_Steps, Total_Distance, Total_Active_Hours, Calories)
+
+sleep_day_merged_b <- sleepDay_merged %>%
+  select(Id, Dates, Total_Hours_Asleep)
+
+```
+
+```{r }
+Merged_data <- daily_activity_b %>% left_join(sleep_day_merged_b)
+
+```
+
+###Look at the data specifics
+
+```{r }
+str(Merged_data)
+
+```
+
+##Cleaning the Data
+
+```{r}
+Merged_data <- distinct(Merged_data)  #remove any duplicates
+
+Merged_data <- drop_na(Merged_data) #Remove missing data
+
+```
+
+##Analyzing the Data
+
+```{r}
+Merged_data %>%
+  select(Total_Steps, Total_Active_Hours, Total_Distance, Total_Hours_Asleep, Calories) %>%
+  summary()
+```
+
+##Supporting Visualisations
+
+```{r}
+ggplot(data = Merged_data) +
+  geom_smooth(mapping = aes(x = Total_Active_Hours, y = Calories)) +
+  labs(title = "The relationship between total hours of activity and calories burned")
+
+```
+
+
+```{r}
+ggplot(data = Merged_data) +
+  geom_smooth(mapping = aes(x = Total_Distance, y = Total_Steps)) +
+  labs(title = "The relationship between total distance and total steps taken")
+
+```
+
+```{r}
+ggplot(data = Merged_data) +
+  geom_smooth(mapping = aes(x = Total_Steps, y = Calories)) +
+  labs(title = "The relationship between total steps taken and calories burned")
+
+```
+
+```{r}
+ggplot(data = Merged_data) +
+  geom_smooth(mapping = aes(x = Total_Hours_Asleep, y = Calories)) +
+  labs(title = "The relationship between total hours slept and calories burned")
+
+```
+
+##Key Findings
+
+From the positive relationships of visualizations above, the following can be inferred;
+
+* The total number of steps taken by each user is proportional to the total number of distance covered.
+* The more walks taken by each user the more calories are burned.
+* The more active a user each day, the more calories they burn.
+
+Unfortunately, the visualization specifying the relationship between hours slept and calories burned is a negative one. But according to research, the more hours slept at night, the more calories burned. The negative representation on the visual could mean an error in how data was collected.
+
+##Recommendations
+
+* The products on BellaBeat app should all collect data on calories burned per activity, and an aggregate data for all calories combined together. This way the error made in finding the relationship between calories burned and hours slept would be mitigated.
+* Include a pop-up notification for users to input; Height and weight to calculate BMI. 
+* Include meal prep menus and their measurements (grams, per serving, etc).
+* Include features that remind users on a daily basis to meetup with fitness goals like; 2 litres of water, 7,000 to 12,000 steps a day, sleep more, etc.
+* Include features to encourage users to be more active when sedentary minutes are high and minutes of activity is low.
+
+
+
